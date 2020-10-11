@@ -1,0 +1,14 @@
+{
+    "config": {
+        "step": {
+            "init": {
+                "data": {
+                    "host": "Host",
+                    "port": "Port"
+                },
+                "title": "Pick a new Smart Ball"
+            }
+        },
+        "title": "Smart Ball"
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "domain": "smart_ball",
+  "name": "Smart Ball",
+  "documentation": "https://github.com/home-assistant/core",
+  "dependencies": [],
+  "codeowners": [],
+  "config_flow": true,
+  "requirements": ["paho-mqtt"]
+}
