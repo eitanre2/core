@@ -1,4 +1,5 @@
 import logging
+import re
 
 import voluptuous as vol
 
@@ -9,11 +10,10 @@ from .hub import Hub
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_SCHEMA = {
-                vol.Required("host", msg="host", default=None): str,
-                vol.Required("port", msg="port", default=1883): int
-}
-DATA_SCHEMA = vol.Schema({vol.Required("host", msg="host", default=None): str,
+IP_REGEX = re.compile(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+
+DATA_SCHEMA = vol.Schema({vol.Required("name", msg="name", default="My Smart Ball"): str,
+                          vol.Required("host", msg="host", default=None): str,
                           vol.Required("port", msg="port", default=1883): int})
 
 async def validate_input(hass: core.HomeAssistant, data: dict):
@@ -26,10 +26,20 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
     # This is a simple example to show an error in the UI for a short hostname
     # The exceptions are defined at the end of this file, and are used in the
     # `async_step_user` method below.
-    if len(data["host"]) < 3:
+    if data["host"] is None or not IP_REGEX.match(data["host"]):
         raise InvalidHost
 
-    hub = Hub(hass, data["host"], data["port"])
+    if data["name"] is None or len(data["name"]) < 1:
+        raise InvalidName
+
+    for entry in hass.config_entries.async_entries():
+        if entry.domain != DOMAIN:
+            continue
+        if entry.data['name'] == data['name'] or entry.data['host'] == data['host']:
+            raise MustBeUniqueBall
+        
+
+    hub = Hub(hass, data["name"], data["host"], data["port"])
     result = await hub.connect()
 
     if not result:
@@ -42,7 +52,7 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
     # If the authentication is wrong:
     # InvalidAuth
 
-    return {"title": f"Smart Ball {data['host']}:{data['port']}" }
+    return {"title": f"Smart Ball-{data['name']}-{hub.hub_id} ({data['host']}:{data['port']})" }
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -86,3 +96,9 @@ class CannotConnect(exceptions.HomeAssistantError):
 
 class InvalidHost(exceptions.HomeAssistantError):
     """Error to indicate there is an invalid hostname."""
+
+class InvalidName(exceptions.HomeAssistantError):
+    """Error to indicate there is an invalid hub name."""
+
+class MustBeUniqueBall(exceptions.HomeAssistantError):
+    """Error to indicate there is an invalid hub name."""

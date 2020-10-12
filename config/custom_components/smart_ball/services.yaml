@@ -1,0 +1,21 @@
+smart_ball_play_IR_Remote_command:
+  description: Run global known IR command
+  fields:
+    command_name:
+      description: Name of the command
+      example: "shut"
+    hub_id:
+      description: Hub to search this command
+      example: "123456789abcdef"
+run_IR_Remote_command:
+  description: Run known IR command
+  fields:
+    entity_id:
+      description: Name of Remote command
+      example: "smart_ball.set_ir_remote_default_on"
+record_IR_Remote_command:
+  description: Record new IR command
+  fields:
+    command_name:
+      description: Name of the new Remote command (cannot be changed)
+      example: "25 deg"

@@ -1,31 +1,48 @@
 import asyncio
+import hashlib
 import json
 from logging import getLogger
 import queue
 import threading
+from threading import Timer
 import time
 
 import paho.mqtt.client as paho
 
+from . import const
+
 _LOGGER = getLogger(__name__)
 
+HUBS = {}
+COMMON_DEVICES = [  const.DEVICE_CLASS_TEMPERATURE, 
+                    const.DEVICE_CLASS_HUMIDITY, 
+                    const.DEVICE_CLASS_LDR, 
+                    const.DEVICE_CLASS_MOTION, 
+                    const.DEVICE_CLASS_UPTIME,
+                    const.DEVICE_CLASS_MOTION_BINARY,
+                    const.DEVICE_CLASS_IRRemote_BINARY]
 class Hub:
-    def __init__(self, hass, host, port):
+    def __init__(self, hass, name, host, port):
         self.host = host
-        self.port = port
+        self.port = port or 1883
         self._hass = hass
+        self._name = name
+        self._hub_id = None
+        self._has_config = False
         self.remote_commands = []
         self.entities = []
         self.running = False
-        self._has_config = False
 
     def add_platform(self, entity):
         self.entities.append(entity)
 
-    async def test_connection(self):
-        """Test connectivity to the Dummy hub is OK."""
-        await asyncio.sleep(1)
-        return True
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def hub_id(self):
+        return self._hub_id
 
     async def connect(self):
         self.running = True
@@ -55,7 +72,7 @@ class Hub:
         if not self._has_config:
             await self.stop()
         else:
-            self.client.subscribe([("state/#", 0)])
+            self._start()
 
         return self._has_config
 
@@ -65,6 +82,12 @@ class Hub:
             self.client.disconnect()
         except Exception as ex:
             pass
+
+    async def remote_command(self, command_name):
+        self.send_command('scenes/IR_scene/command', {"name":"play", "code": command_name})
+
+    async def remote_start_record(self, command_name):
+        self.send_command('scenes/IR_scene/command', {"name":"record", "code": command_name})
 
     def _queue_routine(self):
         while self.running:
@@ -78,6 +101,25 @@ class Hub:
                     pass
                 self.pending_tasks_queue.task_done()
 
+    def _start(self):
+        HUBS[self.hub_id] = self
+        self.client.subscribe([("state/#", 0)])
+
+        self._timer = Timer(const.REFRESH_INTERVAL, self.timer_callback)
+        self._timer.start()
+
+    def timer_callback(self):
+        if self.running == False:
+            return
+
+        for entity in self.entities:
+            if hasattr(entity, 'should_poll_frequently') and entity.should_poll_frequently:
+                entity.schedule_update_ha_state(True)
+
+
+        self._timer = Timer(const.REFRESH_INTERVAL, self.timer_callback)
+        self._timer.start()
+
     def _on_message(self, client, userdata, message):
         try:
             self._handle_message(message)
@@ -85,21 +127,37 @@ class Hub:
             _LOGGER.exception("Failed to parse message from device:" + msg)
 
     def _handle_message(self, message):
-        _LOGGER.info(message)
+        _LOGGER.info(f"MQTT message. topic={message.topic}")
 
         if message.topic.startswith('state'):
-            driver_name = message.topic.split('/')[1]
-            self._handle_topic_state(driver_name, json.loads(message.payload))
+            message_json = json.loads(message.payload)
+            for device in message_json['devices']:
+                try:
+                    self._handle_topic_state(device['name'], device['data'])
+                except Exception as msg:
+                 _LOGGER.exception(f"Failed to update device ({device['name']}) value :" + msg)
 
         if message.topic == 'config':
             self._handle_topic_config(json.loads(message.payload))
 
     def _handle_topic_state(self, driver_name, payload):
-        if driver_name == 'xxx':
-            pass
+        if driver_name in COMMON_DEVICES:
+            entity = self._find_entity(driver_name)
+            if entity is None:
+                return
+            entity.update_state(payload)
+            entity.schedule_update_ha_state()
+
+
+    def _find_entity(self, device_class):
+        for entity in self.entities:
+            if entity.device_class == device_class:
+                return entity
+        return None
 
     def _handle_topic_config(self, payload):
         self.remote_commands = payload['remoteIR']['commands'] or []
+        self._hub_id = payload["hub_id"]
         self._has_config = True
     
     def send_command(self, topic, message):
