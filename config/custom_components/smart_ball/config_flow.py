@@ -39,8 +39,8 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
             raise MustBeUniqueBall
         
 
-    hub = Hub(hass, data["name"], data["host"], data["port"])
-    result = await hub.connect()
+    hub = Hub(hass, data, data["name"], data["host"], data["port"])
+    result = await hub.test_connection()
 
     if not result:
         # If there is an error, raise an exception to notify HA that there was a

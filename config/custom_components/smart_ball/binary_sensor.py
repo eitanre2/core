@@ -20,6 +20,11 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
     new_devices.append(motion_binary_sensor)
     hub.add_platform(motion_binary_sensor)
 
+    # balll is live binary sensor
+    ball_binary_sensor = StateDetectorBinarySensor(hub, const.DEVICE_CLASS_ACTIVE)
+    new_devices.append(ball_binary_sensor)
+    hub.add_platform(ball_binary_sensor)
+
     async_add_devices(new_devices)
 
 class StateDetectorBinarySensor(BinarySensorEntity):
