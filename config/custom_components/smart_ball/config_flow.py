@@ -52,7 +52,7 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
     # If the authentication is wrong:
     # InvalidAuth
 
-    return {"title": f"Smart Ball-{data['name']}-{hub.hub_id} ({data['host']}:{data['port']})" }
+    return {"title": f"Smart Ball-{data['name']}-{hub.hub_id_short} ({data['host']}:{data['port']})" }
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1

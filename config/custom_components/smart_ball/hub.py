@@ -69,6 +69,10 @@ class Hub:
     def hub_id(self):
         return self._hub_id
 
+    @property
+    def hub_id_short(self):
+        return self._hub_id[0:8]
+
     async def test_connection(self):
         self._is_tester = True
         await self.start()
@@ -106,10 +110,10 @@ class Hub:
         await self._async_platforms_cleanup()
 
     async def remote_command(self, command_name):
-        self.send_command('scenes/IR_scene/command', {"name":"play", "code": command_name})
+        self.send_command('command/RemoteIR', {"command":"play", "code": command_name})
 
     async def remote_start_record(self, command_name):
-        self.send_command('scenes/IR_scene/command', {"name":"record", "code": command_name})
+        self.send_command('command/RemoteIR', {"command":"record", "code": command_name})
 
     def _client_cleanup(self):
         if self._client is not None:
@@ -189,7 +193,7 @@ class Hub:
 
         if message.topic.startswith('state'):
             message_json = json.loads(message.payload)
-            for device in message_json['devices']:
+            for device in message_json['drivers']:
                 try:
                     self._handle_topic_state(device['name'], device['data'])
                 except Exception as msg:
@@ -220,7 +224,9 @@ class Hub:
         return None
 
     def _handle_topic_config(self, payload):
-        self.remote_commands = payload['remoteIR']['commands'] or []
+        for driver in payload["drivers"]:
+            if driver == "RemoteIR":
+                self.remote_commands = payload["drivers"]['RemoteIR']['commands'] or []
         self._hub_id = payload["hub_id"]
         if self._is_tester:
             self._has_config = True

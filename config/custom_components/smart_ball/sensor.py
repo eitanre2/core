@@ -49,7 +49,7 @@ class GenericSensor(Entity):
 
     @property
     def name(self):
-        return f"smartball-{self._hub.hub_id}-{self.device_class}"
+        return f"smartball-{self._hub.hub_id_short}-{self.device_class}"
 
     @property
     def device_class(self):
@@ -105,6 +105,6 @@ class GenericSensor(Entity):
         """Fetch new state data for the sensor.
         This is the only method that should fetch new data for Home Assistant.
         """
-        if (self._last_update is not None) and (self._state is not None) and (self._device_class in(const.DEVICE_CLASS_MOTION, const.DEVICE_CLASS_UPTIME)):
+        if (self._last_update is not None) and (self._state is not None) and (self._device_class in(const.DEVICE_CLASS_MOTION)):
             new_state = self._state - (datetime.now() - self._last_update).seconds
             self._state = max(new_state, 0)

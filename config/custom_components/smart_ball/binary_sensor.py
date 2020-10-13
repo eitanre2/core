@@ -48,7 +48,7 @@ class StateDetectorBinarySensor(BinarySensorEntity):
     @property
     def name(self):
         """Return entity name."""
-        return f"smartball-{self._hub.hub_id}-{self.device_class}"
+        return f"smartball-{self._hub.hub_id_short}-{self.device_class}"
 
     @property
     def is_on(self):

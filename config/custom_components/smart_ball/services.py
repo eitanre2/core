@@ -2,9 +2,7 @@ import asyncio
 
 from homeassistant.core import HomeAssistant
 
-from . import hub
 from .const import DOMAIN
-from .remote import IRRemote
 
 
 def register_global_services(hass: HomeAssistant):
@@ -28,7 +26,7 @@ def register_global_services(hass: HomeAssistant):
 
     hass.services.async_register(DOMAIN, f'smart_ball_play_IR_Remote_command', glboal_play_IR_Remote_command)
 
-def register_services(hub: hub.Hub, hass: HomeAssistant):
+def register_services(hub, hass: HomeAssistant):
     def run_IR_Remote_command(call):
         entity_id = call.data.get('entity_id')
         if entity_id is None:

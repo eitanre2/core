@@ -21,7 +21,7 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 class IRRemote(RemoteEntity):
     def __init__(self, hub: hub.Hub, command):
         """Initialize the Demo Remote."""
-        self._name = f"smartball-{hub.hub_id}-remote-{command}"
+        self._name = f"smartball-{hub.hub_id_short}-remote-{command}"
         self._icon = "mdi:remote"
         self._hub = hub
         self.command = command
