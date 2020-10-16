@@ -47,5 +47,5 @@ def register_services(hub, hass: HomeAssistant):
         if not found:
             asyncio.run(hub.remote_start_record(command_name))
 
-    hass.services.async_register(DOMAIN, f'{hub.hub_id}_run_IR_Remote_command', run_IR_Remote_command)
-    hass.services.async_register(DOMAIN, f'{hub.hub_id}_record_IR_Remote_command', record_IR_Remote_command)
+    hass.services.async_register(DOMAIN, f'{hub.hub_id_short}_run_IR_Remote_command', run_IR_Remote_command)
+    hass.services.async_register(DOMAIN, f'{hub.hub_id_short}_record_IR_Remote_command', record_IR_Remote_command)

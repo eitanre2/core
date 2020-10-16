@@ -93,9 +93,6 @@ class Hub:
         self._timer = Timer(0, self.timer_callback)
         self._timer.start()
 
-        # register services
-        services.register_services(self, self._hass)
-
         limit = 10
         _LOGGER.info("Smart-Ball at {slef.remote_address} is waiting for device config..")
         while not self._has_config and limit > 0:
@@ -231,6 +228,9 @@ class Hub:
         if self._is_tester:
             self._has_config = True
             return
+
+        # register services
+        services.register_services(self, self._hass)
         
         HUBS[self.hub_id] = self
         asyncio.run(self._async_platforms_cleanup())
