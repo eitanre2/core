@@ -20,8 +20,7 @@ COMMON_DEVICES = [  const.DEVICE_CLASS_TEMPERATURE,
                     const.DEVICE_CLASS_LDR, 
                     const.DEVICE_CLASS_MOTION, 
                     const.DEVICE_CLASS_UPTIME,
-                    const.DEVICE_CLASS_MOTION_BINARY,
-                    const.DEVICE_CLASS_IRRemote_BINARY]
+                    const.DEVICE_CLASS_MOTION_BINARY]
 class Hub:
     def __init__(self, hass, entry, name, host, port):
         self._host = host

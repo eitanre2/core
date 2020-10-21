@@ -98,13 +98,27 @@ class GenericSensor(Entity):
         """Fetch new state data for the sensor.
         This is the only method that should fetch new data for Home Assistant.
         """
-        self._state = int(data['value'])
+        if self._device_class == const.DEVICE_CLASS_TEMPERATURE:
+            self._state = float(data['value'])
+        if self._device_class == const.DEVICE_CLASS_HUMIDITY:
+            self._state = int(data['value'])
+        if self._device_class == const.DEVICE_CLASS_LDR:
+            self._state = int(data['value'])
+        if self._device_class == const.DEVICE_CLASS_MOTION:
+            self._state = int(data['value'])
+        if self._device_class == const.DEVICE_CLASS_UPTIME:
+            self._state = int(data['value'])
+        
         self._last_update = datetime.now()
 
     def update(self):
         """Fetch new state data for the sensor.
         This is the only method that should fetch new data for Home Assistant.
         """
-        if (self._last_update is not None) and (self._state is not None) and (self._device_class in(const.DEVICE_CLASS_MOTION)):
-            new_state = self._state - (datetime.now() - self._last_update).seconds
+
+        #auto update sensor value if no update received for more than 60 seconds
+        if self._last_update is None or (datetime.now() - self._last_update).seconds < 60:
+            return
+        if (self._state is not None) and (self._device_class in(const.DEVICE_CLASS_MOTION)):
+            new_state = self._state + (datetime.now() - self._last_update).seconds
             self._state = max(new_state, 0)

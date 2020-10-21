@@ -10,11 +10,6 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
     hub = hass.data[const.DOMAIN][config_entry.entry_id]
 
     new_devices = []
-    # IR remote binary sensor
-    ir_binary_sensor = StateDetectorBinarySensor(hub, const.DEVICE_CLASS_IRRemote_BINARY)
-    new_devices.append(ir_binary_sensor)
-    hub.add_platform(ir_binary_sensor)
-
     # motion binary sensor
     motion_binary_sensor = StateDetectorBinarySensor(hub, const.DEVICE_CLASS_MOTION_BINARY)
     new_devices.append(motion_binary_sensor)
