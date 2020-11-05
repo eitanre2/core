@@ -3,6 +3,7 @@ import hashlib
 import json
 from logging import getLogger
 import queue
+from subprocess import check_output
 import threading
 from threading import Timer
 import time
@@ -34,6 +35,7 @@ class Hub:
         self.entities = []
         self._client = None
         self._running = False
+        self.hub_ips = []
         # when true - just create connection. no entities should be created
         self._is_tester = False
 
@@ -87,6 +89,10 @@ class Hub:
         self.pending_tasks_queue = queue.Queue()
         self.queue_thread = threading.Thread(target = self._queue_routine)
         self.queue_thread.start()
+
+        self.hub_ips = check_output(['hostname' ,'-I']).decode('utf-8').replace('\n','').split(' ')
+        while '' in self.hub_ips:
+            self.hub_ips.remove('')
 
         # keepalive timer
         self._timer = Timer(0, self.timer_callback)
@@ -163,9 +169,17 @@ class Hub:
         if self._client is None:
             self._connect()
         else:
-            for entity in self.entities:
-                if hasattr(entity, 'should_poll_frequently') and entity.should_poll_frequently:
-                    entity.schedule_update_ha_state(True)
+            try:
+                for entity in self.entities:
+                    if hasattr(entity, 'should_poll_frequently') and entity.should_poll_frequently:
+                        entity.schedule_update_ha_state(True)
+            except:
+                pass
+
+            try:
+                self.send_command("HB", { "source": "HomeAssistant", "ip": self.hub_ips})
+            except:
+                pass
 
         self._timer = Timer(const.REFRESH_INTERVAL, self.timer_callback)
         self._timer.start()
@@ -228,8 +242,9 @@ class Hub:
             self._has_config = True
             return
 
-        # register services
-        services.register_services(self, self._hass)
+        # register services (only once)
+        if not self._has_config:
+            services.register_services(self, self._hass)
         
         HUBS[self.hub_id] = self
         asyncio.run(self._async_platforms_cleanup())
