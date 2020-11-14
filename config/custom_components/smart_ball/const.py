@@ -2,6 +2,8 @@
 
 DOMAIN = "smart_ball"
 
+DEVICE_TOPIC = "Player"
+
 # units
 DEGREE = "°"
 TEMP_CELSIUS = f"{DEGREE}C"

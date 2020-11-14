@@ -186,8 +186,8 @@ class Hub:
 
     def _on_connect(self, client, userdata, flags, rc):
         _LOGGER.info("Smart-Ball at {self.remote_address} connected")
-        self._client.subscribe([("config/#", 0)])
-        self._client.subscribe([("state/#", 0)])
+        self._client.subscribe([(f"{const.DEVICE_TOPIC}/config/#", 0)])
+        self._client.subscribe([(f"{const.DEVICE_TOPIC}/state/#", 0)])
  
     def _on_disconnect(self, client, userdata, rc):
         _LOGGER.exception("Smart-Ball at {self.remote_address} disconnected")   
@@ -200,8 +200,16 @@ class Hub:
 
     def _handle_message(self, message):
         _LOGGER.info(f"Smart-Ball at {self.remote_address}. New MQTT message. topic={message.topic}")
+        topic_parts = message.topic.split('/')
+        
+        # ignore other topics
+        if topic_parts[0] != const.DEVICE_TOPIC:
+            return
+        
+        topic_parts = topic_parts[1:]
+        command = topic_parts[0]
 
-        if message.topic.startswith('state'):
+        if command == 'state':
             message_json = json.loads(message.payload)
             for device in message_json['drivers']:
                 try:
@@ -215,7 +223,7 @@ class Hub:
             entity.update_state({})
             entity.schedule_update_ha_state()
 
-        if message.topic == 'config':
+        if command == 'config':
             self._handle_topic_config(json.loads(message.payload))
 
     def _handle_topic_state(self, driver_name, payload):
@@ -258,4 +266,4 @@ class Hub:
         self._has_config = True
     
     def send_command(self, topic, message):
-        self._client.publish(f"{topic}", json.dumps(message))
+        self._client.publish(f"{const.DEVICE_TOPIC}/{topic}", json.dumps(message))
