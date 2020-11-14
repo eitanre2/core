@@ -72,7 +72,7 @@ class Hub:
 
     @property
     def hub_id_short(self):
-        return self._hub_id[0:8]
+        return self._hub_id[-8:]
 
     async def test_connection(self):
         self._is_tester = True
